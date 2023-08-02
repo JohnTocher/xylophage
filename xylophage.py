@@ -6,7 +6,15 @@ from pathlib import Path
 
 
 def read_event_log():
-    """Read a windows event log formatted as csv"""
+    """Read a windows event log formatted as csv
+
+    Extracted from event manager:
+    > Applications and Service Logs
+    > Microsoft
+    > Windows
+    > TerminalServices-RemoteConnectionManager
+    > Operational
+    """
 
     count_lines = 0
     count_events = 0
