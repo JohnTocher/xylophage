@@ -13,6 +13,6 @@ specifically processing entries from the event viewer tree at:
 It counts the number of entries and the totals for each user name
 
 You will need a couple of settings in either your settings or secrets toml files:
-Examples:
-PATH_TO_LOGS = "D:/Somewhere"
-CSV_LOG_FILE = "Log_example_2023-07-18.csv"
+Examples:  
+PATH_TO_LOGS = "D:/Somewhere"  
+CSV_LOG_FILE = "Log_example_2023-07-18.csv"  
