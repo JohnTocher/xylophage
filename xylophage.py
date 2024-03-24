@@ -1,8 +1,26 @@
-import csv
+# import csv
 from config import settings
 
 # import rich # Don't need this *yet*
 from pathlib import Path
+
+from garmin import parse_garmin_run
+
+
+def read_file_into_list(file_to_read):
+    """ Reads the provided file into a list object 
+    
+        Reads each line into a list ibect, removing whitespace at both ends
+        Possibly not the best option for massive files!    
+    """
+
+    line_list = list()
+
+    with open(file_to_read, "r") as input_file:
+        line_list = [raw_line.strip() for raw_line in input_file.readlines()]
+    
+    return line_list
+
 
 
 def read_event_log():
@@ -40,10 +58,23 @@ def read_event_log():
     return count_events
 
 
+def process_garmin_data():
+    """ trry reading some garmin data
+    """
+
+    input_filename = Path(settings.GARMIN_FOLDER) / settings.GARMIN_INPUT
+    print(f"Trying to read from: {input_filename}")
+    garmin_raw = read_file_into_list(input_filename)
+    print(f"Read {len(garmin_raw)} lines")
+    garmin_data = parse_garmin_run(garmin_raw)
+    print(f"Garmin data: {garmin_data}")
+
 def run_main():
     """Main function for custom and one-off runs"""
 
-    read_result = read_event_log()
+    #read_result = read_event_log()
+    read_result = process_garmin_data()
+
 
 
 if __name__ == "__main__":
