@@ -1,11 +1,14 @@
 # import csv
+import pyperclip
 from config import settings
 
 # import rich # Don't need this *yet*
 from pathlib import Path
+from datetime import datetime
 
 from garmin import parse_garmin_run
-
+from garmin import garmin_data_for_clipboard
+from garmin import generate_date_from_day
 
 def read_file_into_list(file_to_read):
     """ Reads the provided file into a list object 
@@ -59,7 +62,7 @@ def read_event_log():
 
 
 def process_garmin_data():
-    """ trry reading some garmin data
+    """ try reading some garmin data
     """
 
     input_filename = Path(settings.GARMIN_FOLDER) / settings.GARMIN_INPUT
@@ -68,12 +71,17 @@ def process_garmin_data():
     print(f"Read {len(garmin_raw)} lines")
     garmin_data = parse_garmin_run(garmin_raw)
     print(f"Garmin data: {garmin_data}")
+    clipboard_text = garmin_data_for_clipboard(garmin_data)
+    pyperclip.copy(clipboard_text)
+    print(f"Clipboard: [{clipboard_text}]")
 
 def run_main():
     """Main function for custom and one-off runs"""
 
     #read_result = read_event_log()
-    read_result = process_garmin_data()
+    #read_result = process_garmin_data()
+    test_value = generate_date_from_day("Thursday")
+    print(f"{test_value}")
 
 
 

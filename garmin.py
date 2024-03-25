@@ -3,6 +3,56 @@
 
 """
 
+from datetime import datetime
+
+WEEKDAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+
+def generate_date_from_day(input_day):
+    """ Generates a long daye like 13 March 2024 from a single day like Thursday 
+    
+        Assumes the text was generated today and the activity was less than a week ago
+        Assumes days wont be the same day
+        ToDo - handle Yesterday
+    """
+
+    date_diff = False
+
+    #date_today = datetime.now().strftime('%d %B %Y')
+    day_today = datetime.now().strftime('%A')
+    day_today = "Wednesday"
+
+    print(f"Today is {day_today} and target is {input_day}")
+
+    found_target = False
+    found_today = False
+    date_diff = False
+    loop_index = 0
+
+    for each_day in WEEKDAY_NAMES:
+        loop_index += 1
+        if each_day == day_today:
+            if found_target:
+                date_diff = found_target - loop_index
+                print(f"Finishing with today: {loop_index}")
+                break
+            else:
+                found_today = loop_index
+                print(f"Today: {found_today}")
+        elif each_day == input_day:
+            if found_today:
+                print(f"Finishing with target: {loop_index}")
+                date_diff = (7 - (loop_index - found_today)) * -1
+                break
+            else:
+                found_target = loop_index
+                print(f"Target: {found_target}")
+
+    return date_diff
+
+
+
+
 def parse_garmin_run(summary_text_list):
     """ Iterates over the provided list of text, returns dictionary of data
 
@@ -10,16 +60,20 @@ def parse_garmin_run(summary_text_list):
 
     data_dict = dict()
     data_dict["error"] = True
+    list_length = len(summary_text_list)
 
-    if len(summary_text_list) != 15:
-        data_dict["message"] = f"Unexpected number of lines: {len(summary_text_list)}"
-        return data_dict
+    #if list_length != 15:
+    #    data_dict["message"] = f"Unexpected number of lines: {len(summary_text_list)}"
+    #    return data_dict
 
     first_line = summary_text_list[0]
     if first_line.startswith("Running"):
         date_boundary_right = first_line.rfind("@")
         date_boundary_left = first_line.rfind("on")
         data_part = first_line[date_boundary_left+3:date_boundary_right].strip()
+        if data_part in WEEKDAY_NAMES:
+            data_part = generate_date_from_day(date_part)
+
         data_dict["date text"] = data_part
         time_text = first_line[date_boundary_right+2:].strip()
         data_dict["start time"] = time_text
@@ -72,6 +126,63 @@ def parse_garmin_run(summary_text_list):
     else:
         data_dict["message"] = f"Missing calories: {current_desc}"
         return data_dict
+    
+    # Search the rest of the lines for the next field we expect
+    current_line = 14
+    search_for = "Avg HR"   # Looks like: 135 bpm
+    search_ok = False
+    last_line = "Empty"
+    while current_line < list_length:
+        this_line = summary_text_list[current_line]
+        if this_line == search_for:
+            data_dict[search_for] = int(last_line.split(" ")[0])
+            search_ok = True
+            break
+        else:
+            last_line = this_line
+            current_line += 1
+    if not search_ok:
+        data_dict["message"] = f"Missing {search_for}: {last_line}"
+        return data_dict
+
+    search_for = "Max HR"   # Looks like: 155 bpm
+    search_ok = False
+    last_line = "Empty"
+    while current_line < list_length:
+        this_line = summary_text_list[current_line]
+        if this_line == search_for:
+            data_dict[search_for] = int(last_line.split(" ")[0])
+            search_ok = True
+            break
+        else:
+            last_line = this_line
+            current_line += 1
+    if not search_ok:
+        data_dict["message"] = f"Missing {search_for}: {last_line}"
+        return data_dict
+    
 
     data_dict["error"] = False
     return data_dict
+
+def garmin_data_for_clipboard(garmin_dict):
+    """ Generates the text to put on the clipboard for pasting into a spreadsheet
+    
+    
+        Interprests the garmin data dictionary and formats it for what ought to work
+        pasted into google sheets
+    """
+    date_format = "%d %B %Y"
+    clip_text = ""
+    start_time = datetime.strptime(garmin_dict["date text"], date_format)
+
+    clip_text = start_time.strftime('%d/%m/%Y')
+    clip_text = f"{clip_text}\t{garmin_dict['start time']}"
+    clip_text = f"{clip_text}\t{garmin_dict['distance']}"
+    clip_text = f"{clip_text}\t00:{garmin_dict['time']}"
+    clip_text = f"{clip_text}\t{garmin_dict['calories']}"
+    clip_text = f"{clip_text}\t{garmin_dict['Avg HR']}"
+    clip_text = f"{clip_text}\t{garmin_dict['Max HR']}"
+    #print(f"Text is [{clip_text}]")
+
+    return clip_text
