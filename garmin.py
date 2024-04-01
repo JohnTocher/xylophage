@@ -4,12 +4,13 @@
 """
 
 from datetime import datetime
+from datetime import timedelta
 
 WEEKDAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 
 def generate_date_from_day(input_day):
-    """ Generates a long daye like 13 March 2024 from a single day like Thursday 
+    """ Generates a long date like '13 March 2024' from a single day like Thursday 
     
         Assumes the text was generated today and the activity was less than a week ago
         Assumes days wont be the same day
@@ -20,35 +21,46 @@ def generate_date_from_day(input_day):
 
     #date_today = datetime.now().strftime('%d %B %Y')
     day_today = datetime.now().strftime('%A')
-    day_today = "Wednesday"
+    ##day_today = "Wednesday"
 
-    print(f"Today is {day_today} and target is {input_day}")
-
-    found_target = False
+    passed_input_day = False
     found_today = False
     date_diff = False
     loop_index = 0
 
-    for each_day in WEEKDAY_NAMES:
+    if input_day.lower() == "yesterday":
+        time_offset = timedelta(days = 1)
+        input_day = (datetime.now() - time_offset).strftime('%A')
+    
+    # Now looking for a regular day name from the list
+    for loop_day in WEEKDAY_NAMES:
         loop_index += 1
-        if each_day == day_today:
-            if found_target:
-                date_diff = found_target - loop_index
-                print(f"Finishing with today: {loop_index}")
+        if loop_day == day_today:
+            if passed_input_day:
+                date_diff = passed_input_day - loop_index   # Will be negative
+                print(f"Finishing with today: {loop_index} for diff of {date_diff}")
                 break
             else:
                 found_today = loop_index
                 print(f"Today: {found_today}")
-        elif each_day == input_day:
+        elif loop_day == input_day:
             if found_today:
-                print(f"Finishing with target: {loop_index}")
-                date_diff = (7 - (loop_index - found_today)) * -1
+                date_diff = (7 + found_today  - loop_index) * -1
+                print(f"Finishing with target: {loop_index} for today at {found_today} for diff of {date_diff}")
                 break
             else:
-                found_target = loop_index
-                print(f"Target: {found_target}")
+                passed_input_day = loop_index
+                print(f"Target: {passed_input_day}")
 
-    return date_diff
+    assert passed_input_day or found_today, f"Target day: {input_day} wasn't found  or didn't pass {found_today} "
+
+    print(f"Today is {day_today} and target is {input_day}")
+    time_offset = timedelta(days = date_diff)
+
+    output_day = (datetime.now() + time_offset).strftime('%d %B %Y')
+    
+    return output_day
+    # return date_diff
 
 
 
@@ -72,7 +84,7 @@ def parse_garmin_run(summary_text_list):
         date_boundary_left = first_line.rfind("on")
         data_part = first_line[date_boundary_left+3:date_boundary_right].strip()
         if data_part in WEEKDAY_NAMES:
-            data_part = generate_date_from_day(date_part)
+            data_part = generate_date_from_day(data_part)
 
         data_dict["date text"] = data_part
         time_text = first_line[date_boundary_right+2:].strip()
@@ -174,7 +186,15 @@ def garmin_data_for_clipboard(garmin_dict):
     """
     date_format = "%d %B %Y"
     clip_text = ""
-    start_time = datetime.strptime(garmin_dict["date text"], date_format)
+
+    date_text = garmin_dict["date text"]
+    
+    if date_text == "Yesterday" or date_text in WEEKDAY_NAMES:
+        print(f"Date text was: [{date_text}]")
+        date_text = generate_date_from_day(date_text)
+        print(f"Date text  is: [{date_text}]")
+    
+    start_time = datetime.strptime(date_text, date_format)
 
     clip_text = start_time.strftime('%d/%m/%Y')
     clip_text = f"{clip_text}\t{garmin_dict['start time']}"

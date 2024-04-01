@@ -73,15 +73,16 @@ def process_garmin_data():
     print(f"Garmin data: {garmin_data}")
     clipboard_text = garmin_data_for_clipboard(garmin_data)
     pyperclip.copy(clipboard_text)
-    print(f"Clipboard: [{clipboard_text}]")
+    print(f"Clipboard will be: [{clipboard_text}]")
 
 def run_main():
     """Main function for custom and one-off runs"""
 
     #read_result = read_event_log()
-    #read_result = process_garmin_data()
-    test_value = generate_date_from_day("Thursday")
-    print(f"{test_value}")
+    read_result = process_garmin_data()
+
+    # test_value = generate_date_from_day("Yesterday")
+    # print(f"{test_value}")
 
 
 
